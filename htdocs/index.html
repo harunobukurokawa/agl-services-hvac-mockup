@@ -1,0 +1,37 @@
+<html>
+
+<head>
+    <title>XDS data collector binding Test</title>
+    <link rel="stylesheet" href="iotbzh-Binding.css">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <script type="text/javascript" src="AFB-websock.js"></script>
+    <script type="text/javascript" src="iotbzh-Binding.js"></script>
+</head>
+
+<body class="page-content" onload="init()">
+
+    <img src="assets/iot-bzh-logo-small.png">
+
+    <h1>XDS data collector prototype Test</h1>
+
+    <button id="connected" onclick="init()">Binder WS Fail</button>
+    <button id="monitoring" onclick="window.open('/monitoring/monitor.html','_monitor_ctl')">Debug/Monitoring</a>
+    </button>
+
+    <br>
+    <br>
+
+    <div>
+        <button onclick="callbinder('hvac_mockup','get-temperature' ,{});">Get Temperature</button>
+        <button onclick="callbinder('hvac_mockup','set-temperature-zone1' , {temperature: 10});">Set Temperature zone 1</button>
+        <button onclick="callbinder('hvac_mockup','set-temperature-zone2' , {temperature: 20});">Set Temperature zone 2</button>
+    </div>
+
+    <div id="main" style="visibility:hidden">
+        <ol>
+            <li>Question <pre id="question"></pre>
+            <li>Response <pre id="output"></pre>
+            <li>Events: <pre id="outevt"></pre>
+        </ol>
+    </div>
+</body>

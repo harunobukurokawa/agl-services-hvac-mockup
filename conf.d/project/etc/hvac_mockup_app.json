@@ -1,0 +1,44 @@
+{
+  "$schema": "http://iot.bzh/download/public/schema/json/ctl-schema.json",
+  "metadata": {
+    "uid": "hvac_mockup",
+    "version": "1.0",
+    "api": "hvac_mockup",
+    "info": "hvac_mockup service application used for testing"
+  },
+  "plugins": [{
+    "uid": "hvac_mockup",
+    "info": "Plugin to handle interface with hvac_mockup_app",
+    "spath": "./lib/plugins:./var",
+    "libs": [
+      "hvac_mockup_app.ctlso",
+      "hvac_mockup_app.lua"
+    ]
+  }],
+
+  "onload": [{
+    "uid": "hvac_mockup/run_onload",
+    "action": "lua://hvac_mockup#_run_onload_"
+  }],
+
+  "controls": [{
+    "uid": "ping",
+    "action": "plugin://hvac_mockup#ping"
+  }, {
+    "uid": "get-temperature",
+    "action": "lua://hvac_mockup#_get_temperature_"
+  }, {
+    "uid": "set-temperature-zone1",
+    "privileges": "urn:AGL:permission:hvac:public:zone1",
+    "action": "lua://hvac_mockup#_set_tempe1_"
+    }, {
+      "uid": "set-temperature-zone2",
+      "privileges": "urn:AGL:permission:hvac:public:zone2",
+      "action": "lua://hvac_mockup#_set_tempe2_"
+    }],
+
+  "events": [{
+    "uid": "hvac_mockup_emul",
+    "action": "lua://hvac_mockup#_evt_catcher_"
+  }]
+}
