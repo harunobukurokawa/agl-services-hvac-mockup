@@ -24,12 +24,12 @@
 
 #include "agl_services_hvac_mockup-binding.h"
 
-afb_dynapi* AFB_default;
+AFB_ApiT AFB_default;
 
 // Config Section definition (note: controls section index should match handle
 // retrieval in HalConfigExec)
 static CtlSectionT ctrlSections[] = {
-    { .key = "plugins", .loadCB = PluginConfig},
+    { .key = "plugins", .loadCB = PluginConfig },
     { .key = "onload", .loadCB = OnloadConfig },
     { .key = "controls", .loadCB = ControlConfig },
     { .key = "events", .loadCB = EventConfig },
@@ -60,47 +60,25 @@ static AFB_ApiVerbs CtrlApiVerbs[] = {
     { .verb = NULL } /* marker for end of the array */
 };
 
-static int CtrlLoadStaticVerbs(afb_dynapi* apiHandle, AFB_ApiVerbs* verbs)
+static int CtrlLoadStaticVerbs(AFB_ApiT apiHandle, AFB_ApiVerbs* verbs)
 {
     int errcount = 0;
 
     for (int idx = 0; verbs[idx].verb; idx++) {
-        errcount += afb_dynapi_add_verb(
+        errcount += AFB_ApiAddVerb(
             apiHandle, CtrlApiVerbs[idx].verb, NULL, CtrlApiVerbs[idx].callback,
-            (void*)&CtrlApiVerbs[idx], CtrlApiVerbs[idx].auth, 0);
+            (void*)&CtrlApiVerbs[idx], CtrlApiVerbs[idx].auth, 0, 0);
     }
 
     return errcount;
 };
-/*
-static int CtrlInitOneApi(AFB_ApiT apiHandle)
-{
-    int err = 0;
-
-    BindingData.name = GetBinderName();
-    BindingData.apiHandle = AFB_default = apiHandle; // hugely hack to make all V2 AFB_DEBUG to work in fileutils
-
-    // retrieve section config from api handle
-    CtlConfigT* ctrlConfig = (CtlConfigT*)afb_dynapi_get_userdata(apiHandle);
-    err = CtlConfigExec(apiHandle, ctrlConfig);
-    if (err) {
-        AFB_ApiError(apiHandle, "Error at CtlConfigExec step");
-        return err;
-    }
-
-    return err;
-}
-*/
-
-// next generation dynamic API-V3 mode
-#include <signal.h>
 
 static int CtrlLoadOneApi(void* cbdata, AFB_ApiT apiHandle)
 {
     CtlConfigT* ctrlConfig = (CtlConfigT*)cbdata;
 
     // save closure as api's data context
-    afb_dynapi_set_userdata(apiHandle, ctrlConfig);
+    AFB_ApiSetUserData(apiHandle, ctrlConfig);
 
     // add static controls verbs
     int err = CtrlLoadStaticVerbs(apiHandle, CtrlApiVerbs);
@@ -113,18 +91,14 @@ static int CtrlLoadOneApi(void* cbdata, AFB_ApiT apiHandle)
     err = CtlLoadSections(apiHandle, ctrlConfig, ctrlSections);
 
     // declare an event event manager for this API;
-    afb_dynapi_on_event(apiHandle, CtrlDispatchApiEvent);
+    AFB_ApiOnEvent(apiHandle, CtrlDispatchApiEvent);
 
-    // init API function (does not receive user closure ???
-//  afb_dynapi_on_init(apiHandle, CtrlInitOneApi);
-
-    afb_dynapi_seal(apiHandle);
+    AFB_ApiSeal(apiHandle);
     return err;
 }
 
-int afbBindingEntry(afb_dynapi* apiHandle)
+int afbBindingEntry(AFB_ApiT apiHandle)
 {
-
     AFB_default = apiHandle;
     AFB_ApiNotice(apiHandle, "Controller in afbBindingEntry");
 
@@ -142,27 +116,25 @@ int afbBindingEntry(afb_dynapi* apiHandle)
     CtlConfigT* ctrlConfig = CtlLoadMetaData(apiHandle, configPath);
     if (!ctrlConfig) {
         AFB_ApiError(apiHandle,
-            "CtrlBindingDyn No valid control config file in:\n-- %s",
-            configPath);
+            "No valid control config file in:\n-- %s", configPath);
         return ERROR;
     }
 
     if (!ctrlConfig->api) {
         AFB_ApiError(apiHandle,
-            "CtrlBindingDyn API Missing from metadata in:\n-- %s",
-            configPath);
+            "API Missing from metadata in:\n-- %s", configPath);
         return ERROR;
     }
 
     AFB_ApiNotice(apiHandle, "Controller API='%s' info='%s'", ctrlConfig->api,
         ctrlConfig->info);
 
-    // create one API per config file (Pre-V3 return code ToBeChanged)
-    int status = afb_dynapi_new_api(apiHandle, ctrlConfig->api, ctrlConfig->info, 1, CtrlLoadOneApi, ctrlConfig);
+    // create one API per config file
+    if (! AFB_NewApi(apiHandle, ctrlConfig->api, ctrlConfig->info, 1, CtrlLoadOneApi, ctrlConfig)) {
+        AFB_ApiError(apiHandle, "API creation failed");
+        return ERROR;
+    }
 
     // config exec should be done after api init in order to enable onload to use newly defined ctl API.
-    if (!status)
-        status = CtlConfigExec (apiHandle, ctrlConfig);
-
-    return status;
+    return CtlConfigExec(apiHandle, ctrlConfig);
 }

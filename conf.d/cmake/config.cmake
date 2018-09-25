@@ -19,9 +19,10 @@
 # Project Info
 # ------------------
 set(PROJECT_NAME agl_services_hvac_mockup)
+set(API_NAME afb-hvac_mockup)
 set(PROJECT_PRETTY_NAME "HVAC mockup service")
 set(PROJECT_DESCRIPTION "Provide an AGL HVAC mockup Binding")
-set(PROJECT_URL "https://github.com/iotbzh/agl_services_hvac_mockup")
+set(PROJECT_URL "https://github.com/iotbzh/agl_services_hvac_mocommandcommandckup")
 set(PROJECT_ICON "icon.png")
 set(PROJECT_AUTHOR "Sebastien Douheret")
 set(PROJECT_AUTHOR_MAIL "sebastien@iot.bzh")
@@ -32,20 +33,13 @@ set(PROJECT_LANGUAGES "C")
 # relative to the root project directory
 set(PROJECT_APP_TEMPLATES_DIR "conf.d/app-templates")
 
-# Where are stored your external libraries for your project. This is 3rd party library that you don't maintain
-# but used and must be built and linked.
-# set(PROJECT_LIBDIR "libs")
-
 # Which directories inspect to find CMakeLists.txt target files
 # set(PROJECT_SRC_DIR_PATTERN "*")
 
 # Compilation Mode (DEBUG, RELEASE)
 # ----------------------------------
-set(CMAKE_BUILD_TYPE "DEBUG")
+set(BUILD_TYPE "DEBUG")
 #set(USE_EFENCE 1)
-
-# Helpers Submodule parameters
-# set(AFB_HELPERS_QTWSCLIENT OFF CACHE BOOL "Adds QT5 WebSocket helpers from submodule")
 
 # Kernel selection if needed. You can choose between a
 # mandatory version to impose a minimal version.
@@ -69,15 +63,18 @@ set (gcc_minimal_version 4.9)
 # -----------------------------
 set (PKG_REQUIRED_LIST
 	json-c
-	libsystemd>=222
 	afb-daemon>=4.0
 	libmicrohttpd>=0.9.55
 )
 
+# You can also consider to include libsystemd
+# -----------------------------------
+list (APPEND PKG_REQUIRED_LIST libsystemd>=222)
+
 # Prefix path where will be installed the files
 # Default: /usr/local (need root permission to write in)
 # ------------------------------------------------------
-set(INSTALL_PREFIX $ENV{HOME}/opt)
+set(INSTALL_PREFIX $ENV{HOME}/opt CACHE PATH "INSTALL PREFIX PATH")
 
 # Customize link option
 # -----------------------------
@@ -113,33 +110,45 @@ set(INSTALL_PREFIX $ENV{HOME}/opt)
 #set(DEBUG_COMPILE_OPTIONS
 # -g
 # -ggdb
-# -Wp,-U_FORTIFY_SOURCE
 # CACHE STRING "Compilation flags for DEBUG build type.")
 #set(CCOV_COMPILE_OPTIONS
 # -g
-# -O2
 # --coverage
 # CACHE STRING "Compilation flags for CCOV build type.")
 #set(RELEASE_COMPILE_OPTIONS
-# -g
 # -O2
+# -pipe
+# -D_FORTIFY_SOURCE=2
+# -fstack-protector-strong
+# -Wformat -Wformat-security
+# -Werror=format-security
+# -feliminate-unused-debug-types
+# -Wl,-O1
+# -Wl,--hash-style=gnu
+# -Wl,--as-needed
+# -fstack-protector-strong
+# -Wl,-z,relro,-z,now
 # CACHE STRING "Compilation flags for RELEASE build type.")
 
 set(CONTROL_SUPPORT_LUA 1)
 add_definitions(-DCONTROL_PLUGIN_PATH="${CMAKE_BINARY_DIR}/package/lib/plugins:${CMAKE_BINARY_DIR}/package/var:${INSTALL_PREFIX}/${PROJECT_NAME}/lib/plugins")
 add_definitions(-DCONTROL_CONFIG_PATH="${CMAKE_BINARY_DIR}/package/etc:${INSTALL_PREFIX}/${PROJECT_NAME}/etc")
 add_definitions(-DCTL_PLUGIN_MAGIC=1286576532)
-add_definitions(-DUSE_API_DYN=1 -DAFB_BINDING_VERSION=3 -DAFB_BINDING_WANT_DYNAPI)
+add_definitions(-DAFB_BINDING_VERSION=3)
 
 # (BUG!!!) as PKG_CONFIG_PATH does not work [should be an env variable]
 # ---------------------------------------------------------------------
 set(CMAKE_PREFIX_PATH ${INSTALL_PREFIX}/lib64/pkgconfig ${INSTALL_PREFIX}/lib/pkgconfig)
 set(LD_LIBRARY_PATH ${INSTALL_PREFIX}/lib64 ${INSTALL_PREFIX}/lib)
 
-# Optional location for config.xml.in
-# -----------------------------------
-#set(WIDGET_ICON "\"conf.d/wgt/${PROJECT_ICON}\"" CACHE PATH "Path to the widget icon")
-#set(WIDGET_CONFIG_TEMPLATE "\"${CMAKE_CURRENT_SOURCE_DIR}/conf.d/wgt/config.xml.in\"" CACHE PATH "Path to widget config file template (config.xml.in)")
+# Location for config.xml.in template file.
+#
+# If you keep them commented then it will build with a default minimal widget
+# template which is very simple and it is highly probable that it will not suit
+# to your app.
+# -----------------------------------------
+#set(WIDGET_ICON "conf.d/wgt/${PROJECT_ICON}" CACHE PATH "Path to the widget icon")
+#set(WIDGET_CONFIG_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/conf.d/wgt/config.xml.in" CACHE PATH "Path to widget config file template (config.xml.in)")
 
 # Mandatory widget Mimetype specification of the main unit
 # --------------------------------------------------------------------------
@@ -177,10 +186,6 @@ set(WIDGET_ENTRY_POINT config.xml)
 # -------------------------
 #set(EXTRA_LINK_LIBRARIES)
 
-# Optional force binding installation
-# ------------------------------------
-# set(BINDINGS_INSTALL_PREFIX PrefixPath )
-
 # Optional force binding Linking flag
 # ------------------------------------
 # set(BINDINGS_LINK_FLAG LinkOptions )
@@ -198,8 +203,8 @@ set(AFB_REMPORT "1111" CACHE PATH "Default binder listening port")
 # Print a helper message when every thing is finished
 # ----------------------------------------------------
 set(CLOSING_MESSAGE "Typical binding launch:     \
-afb-daemon --port=${AFB_REMPORT} --name=afb-hvac_mockup --workdir=${CMAKE_BINARY_DIR}/package \
---ldpaths=lib --roothttp=htdocs --token=\"${AFB_TOKEN}\" -vvv")
+afb-daemon --port=${AFB_REMPORT} --name=${API_NAME} --workdir=${CMAKE_BINARY_DIR}/package \
+--ldpaths=lib --roothttp=htdocs --token=\"${AFB_TOKEN}\" --monitoring -vvv")
 
 set(PACKAGE_MESSAGE "Install widget file using in the target : afm-util install ${PROJECT_NAME}.wgt")
 

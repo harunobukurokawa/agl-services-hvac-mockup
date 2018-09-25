@@ -22,8 +22,6 @@ PROJECT_TARGET_ADD(agl_services_hvac_mockup)
 		${TARGET_NAME}-binding.c
 	)
 
-	set(OPENAPI_DEF "agl_services_hvac_mockup-apidef" CACHE STRING "name and path to the JSON API definition without extension")
-
     target_compile_options(${TARGET_NAME}
         PUBLIC  -Wno-unused-variable
     )
@@ -31,7 +29,7 @@ PROJECT_TARGET_ADD(agl_services_hvac_mockup)
 	# Binder exposes a unique public entry point
 	SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
 		PREFIX "afb-"
-		LABELS "BINDINGV2"
+		LABELS "BINDING"
 		LINK_FLAGS ${BINDINGS_LINK_FLAG}
 		OUTPUT_NAME ${TARGET_NAME}
 	)

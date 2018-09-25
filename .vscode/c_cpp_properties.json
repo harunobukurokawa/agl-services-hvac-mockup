@@ -19,8 +19,7 @@
             "defines": [
               "CONTROL_CONFIG_PATH=\"./build/package/etc:/opt/agl_services_mockup/etc\"",
               "CONTROL_SUPPORT_LUA",
-              "AFB_BINDING_PREV3",
-              "USE_API_DYN"
+              "AFB_BINDING_VERSION=3"
             ],
             "intelliSenseMode": "clang-x64",
             "browse": {
